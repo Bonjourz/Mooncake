@@ -150,9 +150,8 @@ def test_main(
                     hash_value ^= hash_tensor(packed_recv_x[i, :num_valid_tokens])
 
             # Check combine correctness
-            for zero_copy in (False, True):
-                if zero_copy:
-                    buffer.get_next_combine_buffer(handle)[:, :, :] = simulated_gemm_x
+            # zero-copy combine is not supported by Mooncake EP
+            for zero_copy in (False,):
                 out = torch.empty(
                     (num_tokens, hidden), dtype=torch.bfloat16, device="cuda"
                 )
@@ -239,7 +238,7 @@ def test_main(
         for return_recv_hook in (False, True):
             group.barrier()
             dispatch_t, combine_t = bench_kineto(
-                partial(test_func, zero_copy=True, return_recv_hook=return_recv_hook),
+                partial(test_func, zero_copy=False, return_recv_hook=return_recv_hook),
                 kernel_names=("dispatch", "combine"),
                 barrier_comm_profiling=True,
                 suppress_kineto_output=True,

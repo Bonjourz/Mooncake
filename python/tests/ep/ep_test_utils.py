@@ -18,9 +18,15 @@ def init_dist(local_rank: int, num_local_ranks: int):
     node_rank = int(os.getenv("RANK", 0))
     assert (num_local_ranks < 8 and num_nodes == 1) or num_local_ranks == 8
 
+    # The mooncake PG backend needs RC queue pairs between ranks, which some
+    # fabrics (EFA, for one) do not support -- ibv_create_qp fails with
+    # EOPNOTSUPP and the link warmup retries forever. Allow falling back to
+    # nccl there, the way run_ep_benchmark.py's --pg-backend already does.
+    backend = os.getenv("MOONCAKE_EP_TEST_PG_BACKEND", "mooncake")
+
     torch.cuda.set_device(local_rank)
     dist.init_process_group(
-        backend="mooncake",
+        backend=backend,
         init_method=f"tcp://{ip}:{port}",
         world_size=num_nodes * num_local_ranks,
         rank=node_rank * num_local_ranks + local_rank,

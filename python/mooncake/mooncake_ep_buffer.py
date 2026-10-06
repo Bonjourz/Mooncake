@@ -184,6 +184,18 @@ class Buffer:
     def connect(self, is_update: bool = False):
         from mooncake import ep
 
+        # Ranks can disagree on _use_fallback: a long-lived buffer flips it to
+        # False after the P2P/IPC sync, while a freshly rebuilt one (the
+        # update_ep_member recovery flow) starts at ibgda_disabled(). Taking
+        # different branches issues mismatched collectives and hangs, so settle
+        # it group-wide first. Every rank, new or old, runs this.
+        flag = torch.tensor(
+            [int(self._use_fallback)], dtype=torch.int32, device="cuda"
+        )
+        flags = [torch.empty_like(flag) for _ in range(self.group_size)]
+        dist.all_gather(flags, flag, self.group)
+        self._use_fallback = any(int(f.item()) for f in flags)
+
         if not self._use_fallback:
             (raddr, rkey) = self.runtime.get_mr_info()
             # torchada maps the CUDA device namespace to MUSA when enabled.
