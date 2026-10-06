@@ -28,15 +28,6 @@ using mooncake::device::mc_route_put;
 using mooncake::device::mc_st_na;
 using mooncake::device::mc_st_release;
 
-__device__ __forceinline__ int ep_qp_channel(int expert_local_idx,
-                                             int qps_per_rank,
-                                             int active_qps_per_rank) {
-    int active_qps = active_qps_per_rank;
-    if (active_qps <= 0 || active_qps > qps_per_rank)
-        active_qps = qps_per_rank;
-    return expert_local_idx % active_qps;
-}
-
 struct DispatchKernelArgs {
     void* packed_recv_x;
     float* packed_recv_x_scales;
