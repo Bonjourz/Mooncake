@@ -38,7 +38,9 @@ if(USE_CUDA)
       "${MOONCAKE_EP_JIT_STAGE_ROOT}/include/mooncake_ep")
   set(MOONCAKE_EP_JIT_TRANSFER_ENGINE_SOURCE_DIR
       "${CMAKE_CURRENT_SOURCE_DIR}/../../mooncake-transfer-engine")
-  set(MOONCAKE_EP_JIT_GENERATED_DIR "${MOONCAKE_EP_JIT_STAGE_ROOT}/generated")
+  # Do not put jit_config.h under mooncake_ep_jit/: everything there goes into
+  # the wheel, but this header is only used to build this library.
+  set(MOONCAKE_EP_JIT_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/jit_generated")
 
   set(MOONCAKE_EP_JIT_CUDA_INCLUDE_DIR "")
   if(CUDAToolkit_INCLUDE_DIRS)
